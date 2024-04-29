@@ -45,6 +45,7 @@ class CustomTextFormField extends StatelessWidget {
         //배경색을 넣을것인지 여부
         //모든 Input 상태의 기본 스타일링값
         border: baseBorder,
+        enabledBorder: baseBorder,
         focusedBorder: baseBorder.copyWith(
             borderSide: baseBorder.borderSide.copyWith(
           color: PRIMARY_COLOR,
