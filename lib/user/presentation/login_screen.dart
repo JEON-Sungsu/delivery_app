@@ -1,13 +1,33 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:delivery_app/common/component/custom_text_form_field.dart';
 import 'package:delivery_app/common/const/colors.dart';
 import 'package:delivery_app/common/layout/default_layout.dart';
+import 'package:delivery_app/common/presentation/root_tab.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  String userName = '';
+  String password = '';
+
+  @override
   Widget build(BuildContext context) {
+    final dio = Dio();
+
+    final emulatorIp = '10.0.2.2:3000';
+    final simulatorIp = '127.0.0.1:3000';
+
+    final ip = Platform.isIOS ? simulatorIp : emulatorIp;
+
     return DefaultLayout(
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -20,7 +40,7 @@ class LoginScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const _Title(),
-                const SizedBox(height:16.0),
+                const SizedBox(height: 16.0),
                 const _SubTitle(),
                 Image.asset(
                   'asset/img/misc/logo.png',
@@ -28,17 +48,41 @@ class LoginScreen extends StatelessWidget {
                 ),
                 CustomTextFormField(
                   hintText: '이메일 입력하세요.',
-                  onChanged: (String value) {},
+                  onChanged: (String value) {
+                    userName = value;
+                  },
                 ),
-                const SizedBox(height:16.0),
+                const SizedBox(height: 16.0),
                 CustomTextFormField(
                   hintText: '비밀번호를 입력하세요.',
                   isObscure: true,
-                  onChanged: (String value) {},
+                  onChanged: (String value) {
+                    password = value;
+                  },
                 ),
-                const SizedBox(height:16.0),
+                const SizedBox(height: 16.0),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    final rawString = '$userName:$password';
+
+                    Codec<String, String> stringToBase64 = utf8.fuse(base64);
+
+                    String token = stringToBase64.encode(rawString);
+
+                    final response = await dio.post(
+                      'http://$ip/auth/login',
+                      options: Options(
+                        headers: {
+                          'authorization': 'Basic $token',
+                        },
+                      ),
+                    );
+                    Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const RootTab(),
+                        ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: PRIMARY_COLOR,
                     foregroundColor: Colors.white,
