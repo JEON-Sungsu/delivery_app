@@ -11,7 +11,7 @@ class RestaurantCard extends StatelessWidget {
   final int deliveryTime;
   final int deliveryFee;
   final double ratings;
-  final RestaurantPriceRange priceRange;
+  final RestaurantPriceRange? priceRange;
   final bool isDetail;
   final String? detail;
 
@@ -24,7 +24,7 @@ class RestaurantCard extends StatelessWidget {
     required this.deliveryTime,
     required this.deliveryFee,
     required this.ratings,
-    required this.priceRange,
+    this.priceRange,
     this.isDetail = false,
     this.detail,
   });
