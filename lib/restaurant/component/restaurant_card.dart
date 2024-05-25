@@ -1,5 +1,6 @@
 import 'package:delivery_app/common/const/colors.dart';
 import 'package:delivery_app/common/const/data.dart';
+import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
 import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:flutter/material.dart';
 
@@ -33,7 +34,7 @@ class RestaurantCard extends StatelessWidget {
       {required RestaurantModel model, bool isDetail = false}) {
     return RestaurantCard(
       image: Image.network(
-        'http://$ip${model.thumbUrl}',
+        model.thumbUrl,
         fit: BoxFit.cover,
       ),
       tags: model.tags,
@@ -44,6 +45,7 @@ class RestaurantCard extends StatelessWidget {
       deliveryFee: model.deliveryFee,
       ratings: model.ratings,
       isDetail: isDetail,
+      detail: model is RestaurantDetailModel ? model.detail : null,
     );
   }
 
@@ -59,7 +61,7 @@ class RestaurantCard extends StatelessWidget {
               ),
         const SizedBox(height: 16.0),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: isDetail? 16.0 : 0),
+          padding: EdgeInsets.symmetric(horizontal: isDetail ? 16.0 : 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -102,7 +104,7 @@ class RestaurantCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if(detail != null && isDetail)
+              if (detail != null && isDetail)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Text(detail!),
