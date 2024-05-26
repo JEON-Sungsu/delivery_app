@@ -1,6 +1,19 @@
 import 'package:delivery_app/common/const/data.dart';
+import 'package:delivery_app/common/secure_storage/secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+final dioProvider = Provider<Dio>((ref) {
+  final dio = Dio();
+  final storage = ref.watch(secureStorageProvider);
+
+  dio.interceptors.add(
+    CustomInterceptor(storage: storage),
+  );
+
+  return dio;
+});
 
 class CustomInterceptor extends Interceptor {
   final FlutterSecureStorage storage;
@@ -85,7 +98,6 @@ class CustomInterceptor extends Interceptor {
 
         //에러가 나지 않았던것 마냥 진행시켜버림
         return handler.resolve(response);
-
       } on DioException catch (e) {
         //Access Token 발급 과정에서 에러가 발생함
         return handler.reject(e);
@@ -97,7 +109,8 @@ class CustomInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    print('[RESP] [${response.requestOptions.method}] ${response.requestOptions.uri}');
+    print(
+        '[RESP] [${response.requestOptions.method}] ${response.requestOptions.uri}');
 
     return super.onResponse(response, handler);
   }

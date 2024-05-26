@@ -4,37 +4,35 @@ import 'package:delivery_app/common/layout/default_layout.dart';
 import 'package:delivery_app/product/component/product_card.dart';
 import 'package:delivery_app/restaurant/component/restaurant_card.dart';
 import 'package:delivery_app/restaurant/model/restaurant_detail_model.dart';
+import 'package:delivery_app/restaurant/provider/restaurant_provider.dart';
 import 'package:delivery_app/restaurant/repository/restaurant_repository.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RestaurantDetailScreen extends StatelessWidget {
+class RestaurantDetailScreen extends ConsumerWidget {
   final String id;
 
   const RestaurantDetailScreen({super.key, required this.id});
 
-  Future<RestaurantDetailModel> _getRestaurantDetail() async {
-    final dio = Dio();
-
-    dio.interceptors.add(
-      CustomInterceptor(
-        storage: storage
-      ),
-    );
-
-    final repository = RestaurantRepository(dio, baseUrl: 'http://$ip/restaurant');
-
-    return await repository.getRestaurantDetail(id: id);
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(restaurantProvider);
+
+    if (data.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return DefaultLayout(
         title: '불타는 떡볶이',
         child: FutureBuilder<RestaurantDetailModel>(
-          future: _getRestaurantDetail(),
+          future: ref
+              .watch(restaurantRepositoryProvider)
+              .getRestaurantDetail(id: id),
           builder: (_, AsyncSnapshot<RestaurantDetailModel> snapshot) {
-            if(snapshot.hasError) {
+            if (snapshot.hasError) {
               return Center(child: Text(snapshot.error.toString()));
             }
 
@@ -70,9 +68,8 @@ class RestaurantDetailScreen extends StatelessWidget {
     );
   }
 
-  SliverPadding renderProducts({
-    required List<RestaurantProductModel> products
-}) {
+  SliverPadding renderProducts(
+      {required List<RestaurantProductModel> products}) {
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       sliver: SliverList(
@@ -93,7 +90,10 @@ class RestaurantDetailScreen extends StatelessWidget {
 
   SliverToBoxAdapter renderTop({required RestaurantDetailModel model}) {
     return SliverToBoxAdapter(
-      child: RestaurantCard.fromModel(model: model, isDetail: true,),
+      child: RestaurantCard.fromModel(
+        model: model,
+        isDetail: true,
+      ),
     );
   }
 }
