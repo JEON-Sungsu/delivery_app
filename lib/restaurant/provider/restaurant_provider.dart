@@ -4,10 +4,21 @@ import 'package:delivery_app/restaurant/model/restaurant_model.dart';
 import 'package:delivery_app/restaurant/repository/restaurant_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final restaurantDetailProvider =
+    Provider.family<RestaurantModel?, String>((ref, id) {
+  final state = ref.watch(restaurantProvider);
+
+  if (state is! CursorPagination) {
+    return null;
+  }
+
+  return state.data.firstWhere((element) => element.id == id);
+});
+
 final restaurantProvider =
-StateNotifierProvider<RestaurantStateNotifier, CursorPaginationBase>((ref) {
+    StateNotifierProvider<RestaurantStateNotifier, CursorPaginationBase>((ref) {
   final RestaurantRepository repository =
-  ref.watch(restaurantRepositoryProvider);
+      ref.watch(restaurantRepositoryProvider);
 
   return RestaurantStateNotifier(repository: repository);
 });
@@ -16,13 +27,11 @@ class RestaurantStateNotifier extends StateNotifier<CursorPaginationBase> {
   final RestaurantRepository repository;
 
   RestaurantStateNotifier({required this.repository})
-      : super(
-      CursorPaginationLoading()
-  ) {
+      : super(CursorPaginationLoading()) {
     paginate();
   }
 
-  paginate({
+  Future<void> paginate({
     int fetchCount = 20,
     bool fetchMore = false,
     bool forceRefetch = false,
@@ -72,23 +81,48 @@ class RestaurantStateNotifier extends StateNotifier<CursorPaginationBase> {
         }
       }
 
-      final resp = await repository.paginate(
-          paginationParams: paginationParams);
+      final resp =
+          await repository.paginate(paginationParams: paginationParams);
 
       if (state is CursorPaginationFetchingMore) {
         final pState = state as CursorPaginationFetchingMore;
 
-        state = resp.copyWith(
-            data: [
-              ...pState.data,
-              ...resp.data
-            ]
-        );
+        state = resp.copyWith(data: [...pState.data, ...resp.data]);
       } else {
         state = resp;
       }
     } catch (e) {
       state = CursorPaginationError(message: '데이터를 가져오지 못했습니다.');
     }
+  }
+
+  void getDetail({
+    required String id,
+  }) async {
+    if (state is! CursorPagination) {
+      await paginate();
+    }
+
+    // state가 CursorPagination이 아닐 때 리턴
+    if (state is! CursorPagination) {
+      return;
+    }
+
+    final pState = state as CursorPagination;
+
+    //현상태에서 state의 타입을 살펴보자면 CursorPagination<RestaurantModel> { meta: CursorPaginationMeta, data: List<RestaurantModel> }
+    //형태로 타입이 정해져있는 상태임.
+    //RestaurantDetail 모델이, Restaurant 모델을 상속받고 있기 때문에, 다형성에 의해서 data 필드에 들어갈 수 있게됨
+    //그래서, 현재 존재하는 state의 data 리스트 중에, id 값이 파라미터로 받은 id값과 같은 친구만
+    //RestaurantModel 에서 RestaurantDetailModel로 바꿔주는 작업이 아래의 copyWith 작업임
+    final resp = await repository.getRestaurantDetail(id: id);
+
+    state = pState.copyWith(
+      data: pState.data
+          .map<RestaurantModel>(
+            (e) => e.id == id ? resp : e,
+          )
+          .toList(),
+    );
   }
 }
